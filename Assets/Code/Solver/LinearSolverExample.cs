@@ -2,8 +2,6 @@
 using Google.OrTools.Init;
 using LinearSolver = Google.OrTools.LinearSolver.Solver;
 
-//test 2
-
 
 namespace Assets.Code.Solver
 {
