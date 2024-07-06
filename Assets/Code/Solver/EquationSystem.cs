@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using Assets.Code.Solver;
 
 public class EquationSystem  {
 
@@ -290,8 +291,10 @@ public class EquationSystem  {
 				return SolveResult.OKAY;
 			}
 			EvalJacobian(J, ref A, clearDrag: !isDragStep);
+			// TODO rewrite to solve for l_1
+			//LinearSolverExample.SolveLinearProgram(A, B, ref X);
 			SolveLeastSquares(A, B, ref X);
-			for(int i = 0; i < currentParams.Count; i++) {
+			for (int i = 0; i < currentParams.Count; i++) {
 				currentParams[i].value -= X[i];
 			}
 		} while(steps++ <= maxSteps);
