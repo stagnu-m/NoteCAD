@@ -839,6 +839,7 @@
     <None Include="Assets\OrToolsUtils\Google.Protobuf.dll" />
     <None Include="Assets\OrToolsUtils\System.Memory.dll" />
     <None Include="Assets\OrToolsUtils\System.Runtime.CompilerServices.Unsafe.xml" />
+    <None Include="Assets\OrToolsUtils\google-ortools-native.dll" />
     <None Include="Assets\TestFiles\sketch_00.xml" />
     <None Include="Assets\Code\External\FileBrowser\Native\Windows\System.Windows.Forms.dll" />
     <None Include="Assets\OrToolsUtils\OrTools.dll" />
