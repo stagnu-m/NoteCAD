@@ -62,30 +62,29 @@ public class CameraController : MonoBehaviour {
 		if(Input.GetKeyUp(KeyCode.Mouse2)) {
 			shift = false;
 		}
-		// Remove rotation
-		//if(Input.GetKeyDown(KeyCode.Mouse1)) {
-		//	rotate = true;
-		//	click = pos;
-		//	screenClick = Input.mousePosition;
-		//	rotPoint = pos;
-		//}
-		//if(Input.GetKeyUp(KeyCode.Mouse1)) {
-		//	rotate = false;
-		//}
+		if(Input.GetKeyDown(KeyCode.Mouse1)) {
+			rotate = true;
+			click = pos;
+			screenClick = Input.mousePosition;
+			rotPoint = pos;
+		}
+		if(Input.GetKeyUp(KeyCode.Mouse1)) {
+			rotate = false;
+		}
 		if(shift) {
 			var delta = pos - click;
 			if(delta.magnitude != 0.0) wasMoved = true;
 			camera.transform.position -= delta;
 			click = Tool.WorldMousePos;
 		}
-		//if(rotate) {
-		//	var delta = -(Input.mousePosition - screenClick).magnitude * rotateSensitivity;
-		//	if(delta != 0.0) wasMoved = true;
-		//	var axis = Vector3.Cross(pos - click, camera.transform.forward).normalized;
-		//	camera.transform.RotateAround(rotPoint, axis,  delta);
-		//	click = Tool.WorldMousePos;
-		//	screenClick = Input.mousePosition;
-		//}
+		if(rotate) {
+			var delta = -(Input.mousePosition - screenClick).magnitude * rotateSensitivity;
+			if(delta != 0.0) wasMoved = true;
+			var axis = Vector3.Cross(pos - click, camera.transform.forward).normalized;
+			camera.transform.RotateAround(rotPoint, axis,  delta);
+			click = Tool.WorldMousePos;
+			screenClick = Input.mousePosition;
+		}
 		if(!EventSystem.current.IsPointerOverGameObject() && Input.mouseScrollDelta.y != 0f) {
 			var mouse = Input.mouseScrollDelta.y;
 			double orthoSize = camera.orthographicSize;
