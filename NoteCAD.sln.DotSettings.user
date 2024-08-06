@@ -2,6 +2,8 @@
 	<s:String x:Key="/Default/Environment/AssemblyExplorer/XmlDocument/@EntryValue">&lt;AssemblyExplorer&gt;&#xD;
   &lt;Assembly Path="C:\Users\Klokta\Desktop\Studium\BachelorArbeit\Project\NoteCAD\Assets\OrToolsUtils\Google.OrTools.dll" /&gt;&#xD;
   &lt;Assembly Path="C:\Users\Klokta\Desktop\Studium\BachelorArbeit\Project\NoteCAD\Assets\OrToolsUtils\OrTools.dll" /&gt;&#xD;
+  &lt;Assembly Path="C:\Program Files\Unity\Hub\Editor\2022.3.32f1\Editor\Data\Managed\UnityEngine\UnityEditor.dll" /&gt;&#xD;
+  &lt;Assembly Path="C:\Users\Klokta\Desktop\Studium\BachelorArbeit\Project\NoteCAD\Library\ScriptAssemblies\UnityEngine.UI.dll" /&gt;&#xD;
 &lt;/AssemblyExplorer&gt;</s:String>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Antidirected/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Blocksize/@EntryIndexedValue">True</s:Boolean>

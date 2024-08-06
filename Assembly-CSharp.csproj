@@ -9,7 +9,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <RootNamespace></RootNamespace>
+    <RootNamespace>
+    </RootNamespace>
     <ProjectGuid>{C1551C5E-9B29-29D3-9ECB-DC3C988BB08C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -1723,10 +1724,6 @@
     </Reference>
     <Reference Include="System.Xml.XPath.XDocument">
       <HintPath>C:\Program Files\Unity\Hub\Editor\2022.3.32f1\Editor\Data\UnityReferenceAssemblies\unity-4.8-api\Facades\System.Xml.XPath.XDocument.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="NuGetForUnity">
-      <HintPath>Library\ScriptAssemblies\NuGetForUnity.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.Services.Analytics.Editor">
