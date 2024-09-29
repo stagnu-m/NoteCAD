@@ -9,8 +9,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <RootNamespace>
-    </RootNamespace>
+    <RootNamespace></RootNamespace>
     <ProjectGuid>{C1551C5E-9B29-29D3-9ECB-DC3C988BB08C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -119,6 +118,7 @@
     <Compile Include="Assets\Code\External\gsGCode\assemblers\MakerbotAssembler.cs" />
     <Compile Include="Assets\Code\External\UnityRuntimeInspector\Plugins\RuntimeInspector\Scripts\RuntimeInspector\Fields\StringField.cs" />
     <Compile Include="Assets\Code\External\geometry3Sharp\math\MathUtil.cs" />
+    <Compile Include="Assets\Code\Tools\ChooseNormComponent.cs" />
     <Compile Include="Assets\Code\Tools\HelpTool.cs" />
     <Compile Include="Assets\Code\External\geometry3Sharp\distance\DistLine3Ray3.cs" />
     <Compile Include="Assets\Code\External\geometry3Sharp\core\Snapping.cs" />
@@ -159,9 +159,9 @@
     <Compile Include="Assets\Code\External\FileBrowser\Scripts\Wrapper\FileBrowserMac.cs" />
     <Compile Include="Assets\Code\External\gsSlicer\generators\ThreeAxisPrintGenerator.cs" />
     <Compile Include="Assets\Code\External\geometry3Sharp\spatial\DenseGrid3.cs" />
+    <Compile Include="Assets\Code\External\netDxf\netDxf\Collections\TextStyles.cs" />
     <Compile Include="Assets\Code\Tools\FullscreenTool.cs" />
     <Compile Include="Assets\Code\External\netDxf\netDxf\Units\AngleDirection.cs" />
-    <Compile Include="Assets\Code\External\netDxf\netDxf\Collections\TextStyles.cs" />
     <Compile Include="Assets\Code\External\netDxf\netDxf\Entities\PolylineSmoothType.cs" />
     <Compile Include="Assets\Code\External\netDxf\netDxf\Entities\RadialDimension.cs" />
     <Compile Include="Assets\Code\External\geometry3Sharp\queries\IntersectionUtil.cs" />
@@ -271,9 +271,9 @@
     <Compile Include="Assets\Code\External\geometry3Sharp\math\TransformSequence2.cs" />
     <Compile Include="Assets\Code\External\netDxf\netDxf\Entities\MeshEdge.cs" />
     <Compile Include="Assets\Code\External\netDxf\netDxf\Collections\Layers.cs" />
+    <Compile Include="Assets\Code\External\geometry3Sharp\core\gParallel.cs" />
     <Compile Include="Assets\Code\External\netDxf\netDxf\Header\HeaderVariable.cs" />
     <Compile Include="Assets\Code\External\UnityRuntimeInspector\Plugins\RuntimeInspector\Scripts\RuntimeInspector\Fields\Vector4Field.cs" />
-    <Compile Include="Assets\Code\External\geometry3Sharp\core\gParallel.cs" />
     <Compile Include="Assets\Code\External\netDxf\netDxf\Tables\UCS.cs" />
     <Compile Include="Assets\Code\External\gsSlicer\toolpaths\FillCurveSet2d.cs" />
     <Compile Include="Assets\Code\External\geometry3Sharp\curve\DGraph3Util.cs" />
@@ -445,8 +445,8 @@
     <Compile Include="Assets\Code\External\netDxf\netDxf\Entities\Attribute.cs" />
     <Compile Include="Assets\Code\External\UnityRuntimeInspector\Plugins\RuntimeInspector\Scripts\RuntimeInspector\Helpers\RecycledListView\RecycledListItem.cs" />
     <Compile Include="Assets\Code\External\gsGCode\interpreters\GCodeToPlanarComplex.cs" />
-    <Compile Include="Assets\Code\External\netDxf\netDxf\Entities\HatchBoundaryPathTypeFlags.cs" />
     <Compile Include="Assets\Code\External\netDxf\netDxf\Tables\VPort.cs" />
+    <Compile Include="Assets\Code\External\netDxf\netDxf\Entities\HatchBoundaryPathTypeFlags.cs" />
     <Compile Include="Assets\Code\External\geometry3Sharp\curve\DGraph2.cs" />
     <Compile Include="Assets\Code\External\netDxf\netDxf\Entities\AttributeFlags.cs" />
     <Compile Include="Assets\Code\External\netDxf\netDxf\Entities\Point.cs" />
@@ -514,11 +514,11 @@
     <Compile Include="Assets\Code\External\UnityRuntimeInspector\Plugins\RuntimeInspector\Scripts\RuntimeInspector\Helpers\RecycledListView\RecycledListView.cs" />
     <Compile Include="Assets\Code\External\netDxf\netDxf\Objects\UnderlayType.cs" />
     <Compile Include="Assets\Code\External\netDxf\netDxf\Entities\Insert.cs" />
-    <Compile Include="Assets\Code\External\geometry3Sharp\comp_geom\GraphSplitter2d.cs" />
     <Compile Include="Assets\Code\External\geometry3Sharp\spatial\DenseGrid2.cs" />
+    <Compile Include="Assets\Code\External\geometry3Sharp\intersection\IntrRay3Box3.cs" />
+    <Compile Include="Assets\Code\External\geometry3Sharp\comp_geom\GraphSplitter2d.cs" />
     <Compile Include="Assets\Code\Tools\SplitTool.cs" />
     <Compile Include="Assets\Code\External\geometry3Sharp\mesh\IMesh.cs" />
-    <Compile Include="Assets\Code\External\geometry3Sharp\intersection\IntrRay3Box3.cs" />
     <Compile Include="Assets\Code\External\netDxf\netDxf\Entities\MTextLineSpacingStyle.cs" />
     <Compile Include="Assets\Code\External\netDxf\netDxf\Entities\Image.cs" />
     <Compile Include="Assets\Code\External\geometry3Sharp\implicit\Implicit2d.cs" />

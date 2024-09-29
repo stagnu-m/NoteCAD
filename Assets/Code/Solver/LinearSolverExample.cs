@@ -42,6 +42,8 @@ namespace Assets.Code.Solver
             {
                 uVars[i] = solver.MakeNumVar(0.0, infinity, $"u{i}");
                 vVars[i] = solver.MakeNumVar(0.0, infinity, $"v{i}");
+                solver.Objective().SetCoefficient(uVars[i], 1.0);
+                solver.Objective().SetCoefficient(vVars[i], 1.0);
                 //uVars[i].SetObjectiveCoefficient(1.0);
                 //vVars[i].SetObjectiveCoefficient(1.0);
             }

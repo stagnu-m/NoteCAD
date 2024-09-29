@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using Assets.Code.Solver;
+using Assets.Code.Tools;
 
 public class EquationSystem  {
 
@@ -19,6 +20,7 @@ public class EquationSystem  {
 	public int maxSteps = 20;
 	public int dragSteps = 3;
 	public bool revertWhenNotConverged = true;
+	public bool IsL1Norm => ChooseNormComponent.IsL1Norm();
 
 	Exp[,] J;
 	double[,] A;
@@ -292,8 +294,23 @@ public class EquationSystem  {
 			}
 			EvalJacobian(J, ref A, clearDrag: !isDragStep);
 			// TODO rewrite to solve for l_1
-			LinearSolverExample.SolveLinearProgram(A, B, ref X);
-			//SolveLeastSquares(A, B, ref X);
+			
+			Debug.Log($"Matrix A before solve:\n{MatrixToString(A)}");
+			Debug.Log($"Vector B before solve:\n{string.Join(", ", B)}");
+			Debug.Log($"Vector X before solve:\n{string.Join(", ", X)}");
+
+			if (IsL1Norm)
+			{
+				LinearSolverExample.SolveLinearProgram(A, B, ref X);
+			}
+			else
+			{
+				SolveLeastSquares(A, B, ref X);
+			}
+			
+			Debug.Log($"Matrix A after solve:\n{MatrixToString(A)}");
+			Debug.Log($"Vector B after solve:\n{string.Join(", ", B)}");
+			Debug.Log($"Vector X after solve:\n{string.Join(", ", X)}");
 			for (int i = 0; i < currentParams.Count; i++) {
 				currentParams[i].value -= X[i];
 			}
@@ -304,5 +321,24 @@ public class EquationSystem  {
 			dofChanged = false;
 		}
 		return SolveResult.DIDNT_CONVEGE;
+
+		// Create a method to print the 2D array
+		string MatrixToString(double[,] matrix)
+		{
+			int rows = matrix.GetLength(0);
+			int columns = matrix.GetLength(1);
+			string result = "";
+
+			for (int i = 0; i < rows; i++)
+			{
+				for (int j = 0; j < columns; j++)
+				{
+					result += matrix[i, j].ToString("F2") + "\t"; // Format with 2 decimal points
+				}
+				result += "\n";
+			}
+
+			return result;
+		}
 	}
 }
