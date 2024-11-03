@@ -17,8 +17,8 @@ public class EquationSystem  {
 	bool isDirty = true;
 
 	public bool IsDirty { get { return isDirty; } }
-	public int maxSteps = 20;
-	public int dragSteps = 3;
+	public int maxSteps = 3;
+	public int dragSteps = 0;
 	public bool revertWhenNotConverged = true;
 	public bool IsL1Norm => ChooseNormComponent.IsL1Norm();
 
@@ -286,7 +286,7 @@ public class EquationSystem  {
 			if(IsConverged(checkDrag: isDragStep)) {
 				if(steps > 0) {
 					dofChanged = true;
-					Debug.Log(String.Format("solved {0} equations with {1} unknowns in {2} steps", equations.Count, currentParams.Count, steps));
+					//Debug.Log(String.Format("solved {0} equations with {1} unknowns in {2} steps", equations.Count, currentParams.Count, steps));
 				}
 				stats = String.Format("eqs:{0}\nunkn: {1}", equations.Count, currentParams.Count);
 				BackSubstitution(subs);
@@ -295,9 +295,9 @@ public class EquationSystem  {
 			EvalJacobian(J, ref A, clearDrag: !isDragStep);
 			// TODO rewrite to solve for l_1
 			
-			Debug.Log($"Matrix A before solve:\n{MatrixToString(A)}");
-			Debug.Log($"Vector B before solve:\n{string.Join(", ", B)}");
-			Debug.Log($"Vector X before solve:\n{string.Join(", ", X)}");
+			//Debug.Log($"Matrix A before solve:\n{MatrixToString(A)}");
+			//Debug.Log($"Vector B before solve:\n{string.Join(", ", B)}");
+			//Debug.Log($"Vector X before solve:\n{string.Join(", ", X)}");
 
 			if (IsL1Norm)
 			{
@@ -308,37 +308,50 @@ public class EquationSystem  {
 				SolveLeastSquares(A, B, ref X);
 			}
 			
-			Debug.Log($"Matrix A after solve:\n{MatrixToString(A)}");
-			Debug.Log($"Vector B after solve:\n{string.Join(", ", B)}");
-			Debug.Log($"Vector X after solve:\n{string.Join(", ", X)}");
+			//Debug.Log($"Matrix A after solve:\n{MatrixToString(A)}");
+			//Debug.Log($"Vector B after solve:\n{string.Join(", ", B)}");
+			//Debug.Log($"Vector X after solve:\n{string.Join(", ", X)}");
+			if (X.Length == 6)
+			{
+				if ((X[0] != 0 && X[4] != 0) ||
+				    (X[0] != 0 && X[5] != 0) ||
+				    (X[1] != 0 && X[4] != 0) ||
+				    (X[1] != 0 && X[5] != 0))
+				{
+					Debug.Log($"Find changed values in different points:\n{string.Join(", ", X)}");
+				}
+			}
 			for (int i = 0; i < currentParams.Count; i++) {
 				currentParams[i].value -= X[i];
 			}
 		} while(steps++ <= maxSteps);
 		IsConverged(checkDrag: false, printNonConverged: true);
+
 		if(revertWhenNotConverged) {
 			RevertParams();
 			dofChanged = false;
 		}
 		return SolveResult.DIDNT_CONVEGE;
 
-		// Create a method to print the 2D array
-		string MatrixToString(double[,] matrix)
+		
+	}
+
+	// Create a method to print the 2D array
+	string MatrixToString(double[,] matrix)
+	{
+		int rows = matrix.GetLength(0);
+		int columns = matrix.GetLength(1);
+		string result = "";
+
+		for (int i = 0; i < rows; i++)
 		{
-			int rows = matrix.GetLength(0);
-			int columns = matrix.GetLength(1);
-			string result = "";
-
-			for (int i = 0; i < rows; i++)
+			for (int j = 0; j < columns; j++)
 			{
-				for (int j = 0; j < columns; j++)
-				{
-					result += matrix[i, j].ToString("F2") + "\t"; // Format with 2 decimal points
-				}
-				result += "\n";
+				result += matrix[i, j].ToString("F2") + "\t"; // Format with 2 decimal points
 			}
-
-			return result;
+			result += "\n";
 		}
+
+		return result;
 	}
 }
