@@ -18,7 +18,7 @@ namespace Assets.Code.Tools
 
 		}
 
-		public static bool IsL1Norm()
+		public static bool IsOldNorm()
 		{
 			Toggle toggle = ToggleGroup.GetFirstActiveToggle();
 			if (toggle.name == "L_1") return true;

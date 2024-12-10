@@ -7,6 +7,21 @@ public class Param {
 	public bool reduceable = true;
 	private double v;
 	public bool changed;
+	public bool IsDrag = false;
+
+	public Param DeepClone()
+	{
+		return new Param(this.name, this.value)
+		{
+			name = this.name,
+			reduceable = this.reduceable,
+			v = this.v,
+			changed = this.changed,
+			IsDrag = this.IsDrag,
+			value = this.value,
+			exp = this.exp
+		};
+	}
 
 	public double value {
 		get { return v; }
@@ -212,7 +227,8 @@ public class Exp {
 	static public Exp CFres	(Exp x) { return new Exp(Op.CFres,	x, null); }
 	//static public Exp Pow  (Exp x, Exp y) { return new Exp(Op.Pow,   x, y); }
 
-	public Exp Drag(Exp to) {
+	public Exp Drag(Exp to)
+	{
 		return new Exp(Op.Drag, this, to);
 	}
 
@@ -226,7 +242,7 @@ public class Exp {
 			case Op.Mul:	return a.Eval() * b.Eval();
 			case Op.Div: {
 					var bv = b.Eval();
-					if(Math.Abs(bv) < 1e-10) {
+					if(Math.Abs(bv) < GaussianMethod.epsilon) {
 						//Debug.Log("Division by zero");
 						bv = 1.0;
 					}

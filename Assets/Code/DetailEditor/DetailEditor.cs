@@ -8,6 +8,7 @@ using Csg;
 using RuntimeInspectorNamespace;
 using System.IO;
 using System.Xml;
+using Assets.Code.Tools;
 
 public class DetailEditor : MonoBehaviour {
 
@@ -166,11 +167,14 @@ public class DetailEditor : MonoBehaviour {
 		ActivateFeature(activeFeature);
 	}
 
-	public void AddDrag(Exp drag) {
+	public void AddDrag(Exp drag)
+	{
+		drag.a.param.IsDrag = true;
 		sys.AddEquation(drag);
 	}
 
 	public void RemoveDrag(Exp drag) {
+		drag.a.param.IsDrag = false;
 		sys.RemoveEquation(drag);
 	}
 
