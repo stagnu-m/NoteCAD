@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Assets.Code.Solver;
 using Assets.Code.Tools;
+using Assets.Code.Utils;
 
 public class EquationSystem  {
 
@@ -34,6 +35,14 @@ public class EquationSystem  {
 	double[] X;
 	double[] Z;
 	double[] oldParamValues;
+
+	Exp[,] J_copy;
+	double[,] A_copy;
+	double[,] AAT_copy;
+	double[] B_copy;
+	double[] X_copy;
+	double[] Z_copy;
+	double[] oldParamValues_copy;
 
 	List<Exp> sourceEquations = new List<Exp>();
 	List<Param> parameters = new List<Param>();
@@ -80,12 +89,12 @@ public class EquationSystem  {
 		isDirty = true;
 	}
 
-	public void Eval(ref double[] B_, ref List<Exp> equations_, bool clearDrag) {
+	public void Eval(ref double[] B_, ref List<Exp> equations_) {
 		for(int i = 0; i < equations_.Count; i++) {
-			if(clearDrag && equations_[i].IsDrag()) {
-				B_[i] = 0.0;
-				continue;
-			}
+			//if(clearDrag && equations_[i].IsDrag()) {
+			//	B_[i] = 0.0;
+			//	continue;
+			//}
 			B_[i] = equations_[i].Eval();
 		}
 	}
@@ -122,7 +131,7 @@ public class EquationSystem  {
 	//	}
 	//}
 
-	void RevertParams(ref double[] oldParamValues_, List<Param> parameters_) {
+	void RevertParams(ref double[] oldParamValues_, ref List<Param> parameters_) {
 		for(int i = 0; i < parameters_.Count; i++) {
 			parameters_[i].value = oldParamValues_[i];
 		}
@@ -152,6 +161,7 @@ public class EquationSystem  {
 	public void EvalJacobian(
 		ref List<Exp> equations_,
 		ref List<Param> currentParams_,
+		ref List<Param> parameters_,
 		ref Dictionary<Param, Param> subs_,
 		ref Exp[,] J_,
 		ref double[,] A_,
@@ -164,6 +174,7 @@ public class EquationSystem  {
 		UpdateDirty(
 			ref equations_,
 			ref currentParams_,
+			ref parameters_,
 			ref subs_,
 			ref J_,
 			ref A_,
@@ -229,6 +240,7 @@ public class EquationSystem  {
 		UpdateDirty(
 			ref equations,
 			ref currentParams,
+			ref parameters,
 			ref subs,
 			ref J,
 			ref A,
@@ -243,6 +255,7 @@ public class EquationSystem  {
 		EvalJacobian(
 			ref equations,
 			ref currentParams,
+			ref parameters,
 			ref subs,
 			ref J,
 			ref A,
@@ -266,6 +279,7 @@ public class EquationSystem  {
 
 	void UpdateDirty(ref List<Exp> equations_,
 	                 ref List<Param> currentParams_,
+	                 ref List<Param> parameters_,
 	                 ref Dictionary<Param, Param> subs_,
 	                 ref Exp[,] J_,
 	                 ref double[,] A_,
@@ -277,7 +291,7 @@ public class EquationSystem  {
 		) {
 		if(isDirty) {
 			equations_ = sourceEquations.Select(e => e.DeepClone()).ToList();
-			currentParams_ = parameters.ToList();
+			currentParams_ = parameters_.ToList();
 			/*
 			foreach(var e in equations) {
 				e.ReduceParams(currentParams);
@@ -291,9 +305,43 @@ public class EquationSystem  {
 			X_ = new double[currentParams_.Count];
 			Z_ = new double[A_.GetLength(0)];
 			AAT_ = new double[A_.GetLength(0), A_.GetLength(0)];
-			oldParamValues_ = new double[parameters.Count];
+			oldParamValues_ = new double[parameters_.Count];
 			isDirty = false;
 			dofChanged = true;
+		}
+	}
+
+	void UpdateDirtyCopy(
+	                 ref List<Exp> equationsCopy,
+	                 ref List<Param> parametersCopy,
+	                 ref List<Param> currentParamsCopy,
+	                 ref Dictionary<Param, Param> subsCopy,
+	                 ref Exp[,] J_,
+	                 ref double[,] A_,
+	                 ref double[] B_,
+	                 ref double[] X_,
+	                 ref double[] Z_,
+	                 ref double[,] AAT_,
+	                 ref double[] oldParamValues_,
+					 bool isDirty_
+	) {
+		if(isDirty_) {
+			foreach (var parameter in parameters)
+			{
+				var parameterCopy = CloneUtility.DeepClone(parameter);
+				parametersCopy.Add(parameterCopy);
+			}
+			equationsCopy = sourceEquations.Select(e => e.DeepClone()).ToList();
+			currentParamsCopy = parametersCopy.ToList();
+			subsCopy = SolveBySubstitution(ref equationsCopy, ref currentParamsCopy);
+
+			J_ = WriteJacobian(ref equationsCopy, ref currentParamsCopy);
+			A_ = new double[J_.GetLength(0), J_.GetLength(1)];
+			B_ = new double[equationsCopy.Count];
+			X_ = new double[currentParamsCopy.Count];
+			Z_ = new double[A_.GetLength(0)];
+			AAT_ = new double[A_.GetLength(0), A_.GetLength(0)];
+			oldParamValues_ = new double[parametersCopy.Count];
 		}
 	}
 
@@ -343,43 +391,6 @@ public class EquationSystem  {
 		return subs_;
 	}
 
-	Dictionary<Param, Param> SolveBySubstitutionWithLocal(
-		ref List<Exp> equations,
-		ref List<Param> currentParams) {
-		var subs = new Dictionary<Param, Param>();
-
-		for(int i = 0; i < equations.Count; i++) {
-			var eq = equations[i];
-			if(!eq.IsSubstitionForm()) continue;
-			var a = eq.GetSubstitutionParamA();
-			var b = eq.GetSubstitutionParamB();
-			if(Math.Abs(a.value - b.value) > GaussianMethod.epsilon) continue;
-			if(!currentParams.Contains(b)) {
-				var t = a;
-				a = b;
-				b = t;
-			}
-			// TODO: Check errors
-			//if(!parameters.Contains(b)) {
-			//	continue;
-			//}
-
-			foreach(var k in subs.Keys.ToList()) {
-				if(subs[k] == b) {
-					subs[k] = a;
-				}
-			}
-			subs[b] = a;
-			equations.RemoveAt(i--);
-			currentParams.Remove(b);
-
-			for(int j = 0; j < equations.Count; j++) {
-				equations[j].Substitute(b, a);
-			}
-		}
-		return subs;
-	}
-
 	public string stats { get; private set; }
 	public bool dofChanged { get; private set; }
 
@@ -388,9 +399,42 @@ public class EquationSystem  {
 
 
 		dofChanged = false;
+		#region initialVars
+		List<Exp> equations_copy = new List<Exp>();
+		List<Param> params_copy = new List<Param>();
+		List<Param> currentParams_copy = new List<Param>();
+
+		Dictionary<Param, Param> subs_copy = new Dictionary<Param, Param>();
+
+		//UpdateDirtyCopy(
+		//	ref equations_copy,
+		//	ref params_copy,
+		//	ref currentParams_copy,
+		//	ref subs_copy,
+		//	ref J_copy,
+		//	ref A_copy,
+		//	ref B_copy,
+		//	ref X_copy,
+		//	ref Z_copy,
+		//	ref AAT_copy,
+		//	ref oldParamValues_copy,
+		//	isDirty
+		//);
+		//currentParams = parameters.Where(p => equations.Any(e => e.IsDependOn(p))).ToList();
+		//var currentParams_copy = params_copy.ToList();
+		//var subs_copy = SolveBySubstitution(ref equations_copy, ref currentParams_copy);
+		//var subs_copy = DeepCopyDictionary(subs);
+		#endregion
+		//var params_copy = new List<Param>();
+		//foreach (var parameter in parameters)
+		//{
+		//	var parameterCopy = CloneUtility.DeepClone(parameter);
+		//	params_copy.Add(parameterCopy);
+		//}
 		UpdateDirty(
 			ref equations,
 			ref currentParams,
+			ref parameters,
 			ref subs,
 			ref J,
 			ref A,
@@ -401,33 +445,12 @@ public class EquationSystem  {
 			ref oldParamValues);
 		StoreParams(ref oldParamValues, parameters);
 
-		#region initialVars
-		var equations_copy = equations.ToList();
-		var currentParams_copy = new List<Param>();
-		foreach (var currentParam in currentParams)
-		{
-			var currentParamCopy = currentParam.DeepClone();
-			currentParams_copy.Add(currentParamCopy);
-		}
-		var params_copy = new List<Param>();
-		foreach (var currentParam in parameters)
-		{
-			var currentParamCopy = currentParam.DeepClone();
-			currentParams_copy.Add(currentParamCopy);
-		}
-		Exp[,] J_copy = J?.Clone() as Exp[,];
-		double[,] A_copy = A?.Clone() as double[,];
-		double[,] AAT_copy = AAT?.Clone() as double[,];
-		double[] B_copy = B?.Clone() as double[];
-		double[] X_copy = X?.Clone() as double[];
-		double[] Z_copy = Z?.Clone() as double[];
-		double[] oldParamValues_copy = oldParamValues?.Clone() as double[];
-		var subs_copy = DeepCopyDictionary(subs);
-		#endregion
+		
 
 		int steps = 0;
+		int counter = 0;
 
-		//var dof = 0;
+		var dof = 0;
 		bool isInitial = true;
 		var initialSolution = new double[X.Length];
 		var initialParamPosition = new double[X.Length];
@@ -478,16 +501,59 @@ public class EquationSystem  {
 	                    ref X,
                         ref Z,
                         ref AAT,
-                        ref oldParamValues);
+                        ref oldParamValues,
+                        ref dof);
                 }
 
                 if (result == SolveResult.BREAK)
                 {
+	                counter++;
 	                break;
                 }
 
+                //if (!isInitial)
+                //{
+	               // result = SolveResultTest(
+		              //  ref steps,
+		              //  ref initialSolution,
+		              //  ref initialParamPosition,
+		              //  ref indicesToConsider,
+		              //  ref dragIndices,
+		              //  ref indexToBlock,
+		              //  ref completeSolution,
+		              //  ref isInitial,
+		              //  ref equations_copy,
+		              //  ref subs_copy,
+		              //  ref params_copy,
+		              //  ref currentParams_copy,
+		              //  ref J_copy,
+		              //  ref A_copy,
+		              //  ref B_copy,
+		              //  ref X_copy,
+		              //  ref Z_copy,
+		              //  ref AAT_copy, 
+		              //  ref oldParamValues_copy);
+                //}
+
                 if (!isInitial)
                 {
+	                if (counter == 1)
+	                {
+		                UpdateDirty(
+			                ref equations,
+			                ref currentParams,
+			                ref parameters,
+			                ref subs,
+			                ref J,
+			                ref A,
+			                ref B,
+			                ref X,
+			                ref Z,
+			                ref AAT,
+			                ref oldParamValues);
+		                StoreParams(ref oldParamValues, parameters);
+		                counter = 2;
+	                }
 	                result = SolveResultTest(
 		                ref steps,
 		                ref initialSolution,
@@ -497,34 +563,94 @@ public class EquationSystem  {
 		                ref indexToBlock,
 		                ref completeSolution,
 		                ref isInitial,
-		                ref equations_copy,
-		                ref subs_copy,
-		                ref params_copy,
-		                ref currentParams_copy,
-		                ref J_copy,
-		                ref A_copy,
-		                ref B_copy,
-		                ref X_copy,
-		                ref Z_copy,
-		                ref AAT_copy, 
-		                ref oldParamValues_copy);
+		                ref equations,
+		                ref subs,
+		                ref parameters,
+		                ref currentParams,
+		                ref J,
+		                ref A,
+		                ref B,
+		                ref X,
+		                ref Z,
+		                ref AAT,
+		                ref oldParamValues,
+		                ref dof);
                 }
 
                 if (result == SolveResult.ITERATION) continue;
                 if (result == SolveResult.OKAY)
                 {
-	                //if (!isInitial)
-	                //{
-	                // for (int i = 0; i < currentParams.Count; i++)
-	                // {
-	                //  currentParams[i].value = currentParams_copy[i].value;
-	                // }
-	                //}
-	                return result;
+					//if (!isInitial)
+					//{
+					//	for (int i = 0; i < currentParams.Count; i++)
+					//	{
+					//		currentParams[i].value = currentParams_copy[i].value;
+					//	}
+
+					//	//for (int i = 0; i < parameters.Count; i++)
+					//	//{
+					//	//	parameters[i].value = params_copy[i].value;
+					//	//}
+
+					//}
+					return result;
                 }
             } while(steps++ <= maxSteps);
 		} while (indicesToConsider.Count(x => !x.IsUsed) > 0);
 
+
+		steps = 0;
+		IndexToBlock nullIndex = null;
+		var empty_solution = new double[X.Length];
+
+		isDirty = true;
+		RevertParams(ref oldParamValues, ref parameters);
+		UpdateDirty(
+			ref equations,
+			ref currentParams,
+			ref parameters,
+			ref subs,
+			ref J,
+			ref A,
+			ref B,
+			ref X,
+			ref Z,
+			ref AAT,
+			ref oldParamValues);
+		StoreParams(ref oldParamValues, parameters);
+
+		do
+		{
+			var result = SolveResult.DEFAULT;
+			
+				result = SolveResultTest(
+					ref steps,
+					ref initialSolution,
+					ref initialParamPosition,
+					ref indicesToConsider,
+					ref dragIndices,
+					ref nullIndex,
+					ref empty_solution,
+					ref isInitial,
+					ref equations,
+					ref subs,
+					ref parameters,
+					ref currentParams,
+					ref J,
+					ref A,
+					ref B,
+					ref X,
+					ref Z,
+					ref AAT,
+					ref oldParamValues,
+					ref dof);
+
+			if (result == SolveResult.ITERATION) continue;
+			if (result == SolveResult.OKAY)
+			{
+				return result;
+			}
+		} while(steps++ <= maxSteps);
 		//var temp2 = currentParams.Count > 4 && Math.Abs(currentParams[4].value + 1.0) > Double.Epsilon;
 		//if (temp2)
 		//{
@@ -557,7 +683,7 @@ public class EquationSystem  {
 		//Debug.Log($"DIDNT_CONVEGE is {notConverge}");
 		IsConverged(ref B,checkDrag: false, ref equations, printNonConverged: true);
 		if (revertWhenNotConverged) {
-			RevertParams(ref oldParamValues, parameters);
+			RevertParams(ref oldParamValues, ref parameters);
 			dofChanged = false;
 		}
 		return SolveResult.DIDNT_CONVEGE;
@@ -581,50 +707,38 @@ public class EquationSystem  {
 	                                    ref double[] X_,
 	                                    ref double[] Z_,
 	                                    ref double[,] AAT_,
-	                                    ref double[] oldParamValues_)
+	                                    ref double[] oldParamValues_,
+	                                    ref int dof)
 	{
-		int dof = 0;
-		bool isDragStep = steps <= dragSteps;
-		//if (!isDragStep && !isInitial)
-		//{
-		//	if (!IsConverged(checkDrag: true))
-		//	{
-		//		break;
-		//	}
-		//}
-		Eval(ref B_, ref equations_, clearDrag: !isDragStep);
+		//bool isDragStep = steps <= dragSteps;
 
+		Eval(ref B_, ref equations_);
 
-		// remove to solve over-constraint systems
-		//if (steps > 0)
-		//{
-		//	BackSubstitution(subs);
-		//	return SolveResult.POSTPONE;
-		//}
-
-		if (IsConverged(ref B_, checkDrag: isDragStep, ref equations_))
+		if (IsConverged(ref B_, checkDrag: true, ref equations_))
 		{
-			//if (isInitial && steps > 0)
-			//{
-			//	//BlockFreeCoordinates(completeSolution, dragIndices, dof, indicesToConsider);
-			//	isInitial = false;
-			//	//if (indicesToConsider.Count > 0)
-			//	//{
-			//		for (int i = 0; i < initialSolution.Length; i++)
-			//		{
-			//			initialSolution[i] = currentParams_[i].value;
-			//			//currentParams_[i].value = initialParamPosition[i];
-			//		}
+			if (isInitial && steps > 0)
+			{
+				BlockFreeCoordinates(completeSolution, dragIndices, dof, indicesToConsider);
+				isInitial = false;
+				//if (indicesToConsider.Count > 0)
+				//{
+				//for (int i = 0; i < initialSolution.Length; i++)
+				//{
+				//	initialSolution[i] = currentParams_[i].value;
+				//	//currentParams_[i].value = initialParamPosition[i];
+				//}
 
-			//	//isDirty = true;
-			//	//RevertParams();
-			//	//UpdateDirty();
-			//	//StoreParams();
-			//	//X_for_method = new double[currentParams_for_method.Count];
-			//	indicesToConsider.Add(new IndexToBlock { Index_x = 4, Index_y = 5 });
-			//	return SolveResult.BREAK;
-			//	//}
-			//}
+				isDirty = true;
+				RevertParams(ref oldParamValues_, ref params_);
+				//UpdateDirty();
+				//StoreParams();
+				//X_for_method = new double[currentParams_for_method.Count];
+				//indicesToConsider.Add(new IndexToBlock { Index_x = 4, Index_y = 5 });
+				//indicesToConsider.Add(new IndexToBlock { Index_x = 0, Index_y = 1 });
+				//indicesToConsider.Add(new IndexToBlock { Index_x = 4, Index_y = 5 });
+				return SolveResult.BREAK;
+				//}
+			}
 
 			if (steps > 0)
 			{
@@ -643,6 +757,21 @@ public class EquationSystem  {
 			//	var test = 0.0;
 			//}
 			stats = $"eqs:{equations_.Count}\nunkn: {currentParams_.Count}";
+			//if (!isInitial)
+			//{
+			//	//for (int i = 0; i < currentParams.Count; i++)
+			//	//{
+			//	//	currentParams[i].value = currentParams_[i].value;
+			//	//}
+
+			//	for (int i = 0; i < parameters.Count; i++)
+			//	{
+			//		parameters[i].value = params_[i].value;
+			//	}
+
+			//	BackSubstitution(ref subs, ref parameters);
+			//	return SolveResult.OKAY;
+			//}
 			BackSubstitution(ref subs_, ref params_);
 			return SolveResult.OKAY;
 		}
@@ -650,6 +779,7 @@ public class EquationSystem  {
 		EvalJacobian(
 			ref equations_,
 			ref currentParams_,
+			ref params_,
 			ref subs_,
 			ref J_,
 			ref A_,
@@ -658,7 +788,7 @@ public class EquationSystem  {
 			ref Z_,
 			ref AAT_,
 			ref oldParamValues_,
-			clearDrag: !isDragStep);
+			clearDrag: false);
 
 		// TODO rewrite to solve for l_1
 
@@ -786,8 +916,8 @@ public class EquationSystem  {
 	    foreach (var kvp in original)
 	    {
 		    // Deep clone both key and value
-		    var clonedKey = kvp.Key.DeepClone();
-		    var clonedValue = kvp.Value.DeepClone();
+		    var clonedKey = CloneUtility.DeepClone(kvp.Key);
+		    var clonedValue = CloneUtility.DeepClone(kvp.Value);
 		    deepCopy[clonedKey] = clonedValue;
 	    }
 

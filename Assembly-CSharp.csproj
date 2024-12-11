@@ -340,6 +340,7 @@
     <Compile Include="Assets\Code\External\geometry3Sharp\distance\DistTriangle3Triangle3.cs" />
     <Compile Include="Assets\Code\External\geometry3Sharp\math\Matrix2f.cs" />
     <Compile Include="Assets\Code\External\geometry3Sharp\core\HBitArray.cs" />
+    <Compile Include="Assets\Code\Utils\CloneUtility.cs" />
     <Compile Include="Assets\Code\External\geometry3Sharp\mesh_generators\SphereGenerators.cs" />
     <Compile Include="Assets\Code\External\netDxf\netDxf\Objects\GroupEntityChangeEventArgs.cs" />
     <Compile Include="Assets\Code\External\geometry3Sharp\mesh\MeshDecomposition.cs" />
