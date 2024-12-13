@@ -26,7 +26,11 @@ public class EquationSystem  {
 	public int maxSteps = 20;
 	public int dragSteps = 3;
 	public bool revertWhenNotConverged = true;
-	public bool IsL1Norm => ChooseNormComponent.IsOldNorm();
+	private bool IsNoBlock => ChooseBlockPoints.IsNoBlock();
+	private bool IsProStep => ChooseBlockPoints.IsProStep();
+	private bool IsAfterSolution => ChooseBlockPoints.IsAfterSolution();
+	private bool IsReset = false;
+	
 
 	Exp[,] J;
 	double[,] A;
@@ -35,14 +39,6 @@ public class EquationSystem  {
 	double[] X;
 	double[] Z;
 	double[] oldParamValues;
-
-	Exp[,] J_copy;
-	double[,] A_copy;
-	double[,] AAT_copy;
-	double[] B_copy;
-	double[] X_copy;
-	double[] Z_copy;
-	double[] oldParamValues_copy;
 
 	List<Exp> sourceEquations = new List<Exp>();
 	List<Param> parameters = new List<Param>();
@@ -113,23 +109,11 @@ public class EquationSystem  {
 		return true;
 	}
 
-	//void StoreParams() {
-	//	for(int i = 0; i < parameters.Count; i++) {
-	//		oldParamValues[i] = parameters[i].value;
-	//	}
-	//}
-
 	void StoreParams(ref double[] oldParamValues_, List<Param> parameters_) {
 		for(int i = 0; i < parameters_.Count; i++) {
 			oldParamValues_[i] = parameters_[i].value;
 		}
 	}
-
-	//void RevertParams() {
-	//	for(int i = 0; i < parameters.Count; i++) {
-	//		parameters[i].value = oldParamValues[i];
-	//	}
-	//}
 
 	void RevertParams(ref double[] oldParamValues_, ref List<Param> parameters_) {
 		for(int i = 0; i < parameters_.Count; i++) {
@@ -311,40 +295,6 @@ public class EquationSystem  {
 		}
 	}
 
-	void UpdateDirtyCopy(
-	                 ref List<Exp> equationsCopy,
-	                 ref List<Param> parametersCopy,
-	                 ref List<Param> currentParamsCopy,
-	                 ref Dictionary<Param, Param> subsCopy,
-	                 ref Exp[,] J_,
-	                 ref double[,] A_,
-	                 ref double[] B_,
-	                 ref double[] X_,
-	                 ref double[] Z_,
-	                 ref double[,] AAT_,
-	                 ref double[] oldParamValues_,
-					 bool isDirty_
-	) {
-		if(isDirty_) {
-			foreach (var parameter in parameters)
-			{
-				var parameterCopy = CloneUtility.DeepClone(parameter);
-				parametersCopy.Add(parameterCopy);
-			}
-			equationsCopy = sourceEquations.Select(e => e.DeepClone()).ToList();
-			currentParamsCopy = parametersCopy.ToList();
-			subsCopy = SolveBySubstitution(ref equationsCopy, ref currentParamsCopy);
-
-			J_ = WriteJacobian(ref equationsCopy, ref currentParamsCopy);
-			A_ = new double[J_.GetLength(0), J_.GetLength(1)];
-			B_ = new double[equationsCopy.Count];
-			X_ = new double[currentParamsCopy.Count];
-			Z_ = new double[A_.GetLength(0)];
-			AAT_ = new double[A_.GetLength(0), A_.GetLength(0)];
-			oldParamValues_ = new double[parametersCopy.Count];
-		}
-	}
-
 	void BackSubstitution(ref Dictionary<Param, Param> subs_, ref List<Param> parameters_) {
 		if(subs_ == null) return;
 		for(int i = 0; i < parameters_.Count; i++) {
@@ -395,42 +345,8 @@ public class EquationSystem  {
 	public bool dofChanged { get; private set; }
 
 	public SolveResult Solve() {
-		
-
-
 		dofChanged = false;
-		#region initialVars
-		List<Exp> equations_copy = new List<Exp>();
-		List<Param> params_copy = new List<Param>();
-		List<Param> currentParams_copy = new List<Param>();
-
-		Dictionary<Param, Param> subs_copy = new Dictionary<Param, Param>();
-
-		//UpdateDirtyCopy(
-		//	ref equations_copy,
-		//	ref params_copy,
-		//	ref currentParams_copy,
-		//	ref subs_copy,
-		//	ref J_copy,
-		//	ref A_copy,
-		//	ref B_copy,
-		//	ref X_copy,
-		//	ref Z_copy,
-		//	ref AAT_copy,
-		//	ref oldParamValues_copy,
-		//	isDirty
-		//);
-		//currentParams = parameters.Where(p => equations.Any(e => e.IsDependOn(p))).ToList();
-		//var currentParams_copy = params_copy.ToList();
-		//var subs_copy = SolveBySubstitution(ref equations_copy, ref currentParams_copy);
-		//var subs_copy = DeepCopyDictionary(subs);
-		#endregion
-		//var params_copy = new List<Param>();
-		//foreach (var parameter in parameters)
-		//{
-		//	var parameterCopy = CloneUtility.DeepClone(parameter);
-		//	params_copy.Add(parameterCopy);
-		//}
+		IsReset = false;
 		UpdateDirty(
 			ref equations,
 			ref currentParams,
@@ -466,222 +382,184 @@ public class EquationSystem  {
 			dragIndices.Add(currentParamIndex);
 		}
 
-		do
+		//-----------------------------------------------------------------------------------------------------------------------
+		// If IsNoBlock
+		if (IsNoBlock)
 		{
-			//IndexToBlock indexToBlock = null;
-			var indexToBlock = indicesToConsider.FirstOrDefault(x => !x.IsUsed);
-			//if (!isInitial)
-			//{
-			//var indexToBlock = new IndexToBlock { Index_x = 4, Index_y = 5 };
-			//}
-
-			steps = 0;
-			var completeSolution = new double[X.Length];
-			do
+			var empty_solution = new double[X.Length];
+			var defaultSolver = DefaultSolver(steps, initialSolution, initialParamPosition, indicesToConsider, dragIndices, null, empty_solution, false, dof);
+			if (defaultSolver == SolveResult.OKAY)
 			{
-                var result = SolveResult.DEFAULT;
-                if (isInitial)
-                {
-                    result = SolveResultTest(
-                        ref steps,
-                        ref initialSolution,
-                        ref initialParamPosition,
-                        ref indicesToConsider,
-                        ref dragIndices,
-                        ref indexToBlock,
-                        ref completeSolution,
-                        ref isInitial,
-                        ref equations,
-                        ref subs,
-                        ref parameters,
-                        ref currentParams,
-                        ref J,
-                        ref A,
-						ref B,
-	                    ref X,
-                        ref Z,
-                        ref AAT,
-                        ref oldParamValues,
-                        ref dof);
-                }
-
-                if (result == SolveResult.BREAK)
-                {
-	                counter++;
-	                break;
-                }
-
-                //if (!isInitial)
-                //{
-	               // result = SolveResultTest(
-		              //  ref steps,
-		              //  ref initialSolution,
-		              //  ref initialParamPosition,
-		              //  ref indicesToConsider,
-		              //  ref dragIndices,
-		              //  ref indexToBlock,
-		              //  ref completeSolution,
-		              //  ref isInitial,
-		              //  ref equations_copy,
-		              //  ref subs_copy,
-		              //  ref params_copy,
-		              //  ref currentParams_copy,
-		              //  ref J_copy,
-		              //  ref A_copy,
-		              //  ref B_copy,
-		              //  ref X_copy,
-		              //  ref Z_copy,
-		              //  ref AAT_copy, 
-		              //  ref oldParamValues_copy);
-                //}
-
-                if (!isInitial)
-                {
-	                if (counter == 1)
-	                {
-		                UpdateDirty(
-			                ref equations,
-			                ref currentParams,
-			                ref parameters,
-			                ref subs,
-			                ref J,
-			                ref A,
-			                ref B,
-			                ref X,
-			                ref Z,
-			                ref AAT,
-			                ref oldParamValues);
-		                StoreParams(ref oldParamValues, parameters);
-		                counter = 2;
-	                }
-	                result = SolveResultTest(
-		                ref steps,
-		                ref initialSolution,
-		                ref initialParamPosition,
-		                ref indicesToConsider,
-		                ref dragIndices,
-		                ref indexToBlock,
-		                ref completeSolution,
-		                ref isInitial,
-		                ref equations,
-		                ref subs,
-		                ref parameters,
-		                ref currentParams,
-		                ref J,
-		                ref A,
-		                ref B,
-		                ref X,
-		                ref Z,
-		                ref AAT,
-		                ref oldParamValues,
-		                ref dof);
-                }
-
-                if (result == SolveResult.ITERATION) continue;
-                if (result == SolveResult.OKAY)
-                {
-					//if (!isInitial)
-					//{
-					//	for (int i = 0; i < currentParams.Count; i++)
-					//	{
-					//		currentParams[i].value = currentParams_copy[i].value;
-					//	}
-
-					//	//for (int i = 0; i < parameters.Count; i++)
-					//	//{
-					//	//	parameters[i].value = params_copy[i].value;
-					//	//}
-
-					//}
-					return result;
-                }
-            } while(steps++ <= maxSteps);
-		} while (indicesToConsider.Count(x => !x.IsUsed) > 0);
-
-
-		steps = 0;
-		IndexToBlock nullIndex = null;
-		var empty_solution = new double[X.Length];
-
-		isDirty = true;
-		RevertParams(ref oldParamValues, ref parameters);
-		UpdateDirty(
-			ref equations,
-			ref currentParams,
-			ref parameters,
-			ref subs,
-			ref J,
-			ref A,
-			ref B,
-			ref X,
-			ref Z,
-			ref AAT,
-			ref oldParamValues);
-		StoreParams(ref oldParamValues, parameters);
-
-		do
-		{
-			var result = SolveResult.DEFAULT;
-			
-				result = SolveResultTest(
-					ref steps,
-					ref initialSolution,
-					ref initialParamPosition,
-					ref indicesToConsider,
-					ref dragIndices,
-					ref nullIndex,
-					ref empty_solution,
-					ref isInitial,
-					ref equations,
-					ref subs,
-					ref parameters,
-					ref currentParams,
-					ref J,
-					ref A,
-					ref B,
-					ref X,
-					ref Z,
-					ref AAT,
-					ref oldParamValues,
-					ref dof);
-
-			if (result == SolveResult.ITERATION) continue;
-			if (result == SolveResult.OKAY)
-			{
-				return result;
+				return defaultSolver;
 			}
-		} while(steps++ <= maxSteps);
-		//var temp2 = currentParams.Count > 4 && Math.Abs(currentParams[4].value + 1.0) > Double.Epsilon;
-		//if (temp2)
-		//{
-		//	var test = 0.0;
-		//}
+		}
 
-		//if (!isInitial)
-		//{
-		//	for (int i = 0; i < currentParams.Count; i++)
-		//	{
-		//		currentParams[i].value = initialSolution[i];
-		//	}
-		//}
+		//-----------------------------------------------------------------------------------------------------------------------
+		// If IsAfterSolution
+		if (IsAfterSolution)
+		{
+					do
+					{
+						//IndexToBlock indexToBlock = null;
+						var indexToBlock = indicesToConsider.FirstOrDefault(x => !x.IsUsed);
+						//if (!isInitial)
+						//{
+						//var indexToBlock = new IndexToBlock { Index_x = 4, Index_y = 5 };
+						//}
 
+						steps = 0;
+						var completeSolution = new double[X.Length];
+						do
+						{
+							var result = SolveResult.DEFAULT;
+							if (isInitial)
+							{
+								result = SolveResultL1(
+									ref steps,
+									ref initialSolution,
+									ref initialParamPosition,
+									ref indicesToConsider,
+									ref dragIndices,
+									ref indexToBlock,
+									ref completeSolution,
+									ref isInitial,
+									ref equations,
+									ref subs,
+									ref parameters,
+									ref currentParams,
+									ref J,
+									ref A,
+									ref B,
+									ref X,
+									ref Z,
+									ref AAT,
+									ref oldParamValues,
+									ref dof);
+							}
 
-		//if (IsConverged(checkDrag: false, printNonConverged: true))
-		//{
-		//	if (steps > 0)
-		//	{
-		//		dofChanged = true;
-		//		Debug.Log(
-		//			$"solved {equations.Count} equations with {currentParams.Count} unknowns in {steps} steps");
-		//	}
-		//	stats = $"eqs:{equations.Count}\nunkn: {currentParams.Count}";
-		//	BackSubstitution(subs);
-		//	return SolveResult.OKAY;
-		//}
+							if (result == SolveResult.BREAK)
+							{
+								counter++;
+								break;
+							}
+
+							if (!isInitial)
+							{
+								if (counter == 1)
+								{
+									isDirty = true;
+									UpdateDirty(
+										ref equations,
+										ref currentParams,
+										ref parameters,
+										ref subs,
+										ref J,
+										ref A,
+										ref B,
+										ref X,
+										ref Z,
+										ref AAT,
+										ref oldParamValues);
+									StoreParams(ref oldParamValues, parameters);
+									counter = 2;
+								}
+								result = SolveResultL1(
+									ref steps,
+									ref initialSolution,
+									ref initialParamPosition,
+									ref indicesToConsider,
+									ref dragIndices,
+									ref indexToBlock,
+									ref completeSolution,
+									ref isInitial,
+									ref equations,
+									ref subs,
+									ref parameters,
+									ref currentParams,
+									ref J,
+									ref A,
+									ref B,
+									ref X,
+									ref Z,
+									ref AAT,
+									ref oldParamValues,
+									ref dof);
+							}
+
+							if (result == SolveResult.ITERATION) continue;
+							if (result == SolveResult.OKAY)
+							{
+								return result;
+							}
+						} while(steps++ <= maxSteps);
+					} while (indicesToConsider.Count(x => !x.IsUsed) > 0);
+
+					steps = 0;
+					var empty_solution = new double[X.Length];
+
+					isDirty = true;
+					RevertParams(ref oldParamValues, ref parameters);
+					UpdateDirty(
+						ref equations,
+						ref currentParams,
+						ref parameters,
+						ref subs,
+						ref J,
+						ref A,
+						ref B,
+						ref X,
+						ref Z,
+						ref AAT,
+						ref oldParamValues);
+					StoreParams(ref oldParamValues, parameters);
+
+					var defaultSolver = DefaultSolver(steps, initialSolution, initialParamPosition, indicesToConsider, dragIndices, null, empty_solution, false, dof);
+					if (defaultSolver == SolveResult.OKAY)
+					{
+						return defaultSolver;
+					}
+		}
+
+		//-----------------------------------------------------------------------------------------------------------------------
+		// If IsProStep
+
+		if (IsProStep)
+		{
+			var empty_solution = new double[X.Length];
+			var defaultSolver = DefaultSolver(steps, initialSolution, initialParamPosition, indicesToConsider, dragIndices, null, empty_solution, false, dof);
+			if (defaultSolver == SolveResult.OKAY)
+			{
+				return defaultSolver;
+			}
+
+			// if no solution found, use initial one
+			IsReset = true;
+			isDirty = true;
+			RevertParams(ref oldParamValues, ref parameters);
+			UpdateDirty(
+				ref equations,
+				ref currentParams,
+				ref parameters,
+				ref subs,
+				ref J,
+				ref A,
+				ref B,
+				ref X,
+				ref Z,
+				ref AAT,
+				ref oldParamValues);
+			StoreParams(ref oldParamValues, parameters);
+
+			defaultSolver = DefaultSolver(steps, initialSolution, initialParamPosition, indicesToConsider, dragIndices, null, empty_solution, false, dof);
+			if (defaultSolver == SolveResult.OKAY)
+			{
+				return defaultSolver;
+			}
+		}
 
 		//var notConverge = IsConverged(checkDrag: false, printNonConverged: true);
 		//Debug.Log($"DIDNT_CONVEGE is {notConverge}");
-		IsConverged(ref B,checkDrag: false, ref equations, printNonConverged: true);
+		IsConverged(ref B,checkDrag: true, ref equations, printNonConverged: true);
 		if (revertWhenNotConverged) {
 			RevertParams(ref oldParamValues, ref parameters);
 			dofChanged = false;
@@ -689,7 +567,55 @@ public class EquationSystem  {
 		return SolveResult.DIDNT_CONVEGE;
 	}
 
-	private SolveResult SolveResultTest(ref int steps,
+	private SolveResult DefaultSolver(
+		int steps, 
+		double[] initialSolution, 
+		double[] initialParamPosition,
+		List<IndexToBlock> indicesToConsider, 
+		List<int> dragIndices, 
+		IndexToBlock nullIndex,
+		double[] empty_solution, 
+		bool isInitial, 
+		int dof)
+	{
+		SolveResult result;
+		do
+		{
+			result = SolveResult.DEFAULT;
+
+			result = SolveResultL1(
+				ref steps,
+				ref initialSolution,
+				ref initialParamPosition,
+				ref indicesToConsider,
+				ref dragIndices,
+				ref nullIndex,
+				ref empty_solution,
+				ref isInitial,
+				ref equations,
+				ref subs,
+				ref parameters,
+				ref currentParams,
+				ref J,
+				ref A,
+				ref B,
+				ref X,
+				ref Z,
+				ref AAT,
+				ref oldParamValues,
+				ref dof);
+
+			if (result == SolveResult.ITERATION) continue;
+			if (result == SolveResult.OKAY)
+			{
+				return result;
+			}
+		} while (steps++ <= maxSteps);
+
+		return result;
+	}
+
+	private SolveResult SolveResultL1(ref int steps,
 	                                    ref double[] initialSolution,
 	                                    ref double[] initialParamPosition,
 	                                    ref List<IndexToBlock> indicesToConsider,
@@ -710,8 +636,6 @@ public class EquationSystem  {
 	                                    ref double[] oldParamValues_,
 	                                    ref int dof)
 	{
-		//bool isDragStep = steps <= dragSteps;
-
 		Eval(ref B_, ref equations_);
 
 		if (IsConverged(ref B_, checkDrag: true, ref equations_))
@@ -720,24 +644,12 @@ public class EquationSystem  {
 			{
 				BlockFreeCoordinates(completeSolution, dragIndices, dof, indicesToConsider);
 				isInitial = false;
-				//if (indicesToConsider.Count > 0)
-				//{
-				//for (int i = 0; i < initialSolution.Length; i++)
-				//{
-				//	initialSolution[i] = currentParams_[i].value;
-				//	//currentParams_[i].value = initialParamPosition[i];
-				//}
 
-				isDirty = true;
 				RevertParams(ref oldParamValues_, ref params_);
-				//UpdateDirty();
-				//StoreParams();
-				//X_for_method = new double[currentParams_for_method.Count];
 				//indicesToConsider.Add(new IndexToBlock { Index_x = 4, Index_y = 5 });
 				//indicesToConsider.Add(new IndexToBlock { Index_x = 0, Index_y = 1 });
 				//indicesToConsider.Add(new IndexToBlock { Index_x = 4, Index_y = 5 });
 				return SolveResult.BREAK;
-				//}
 			}
 
 			if (steps > 0)
@@ -746,32 +658,7 @@ public class EquationSystem  {
 				Debug.Log(
 					$"solved {equations_.Count} equations with {currentParams_.Count} unknowns in {steps} steps");
 			}
-
-			//var temp = currentParams.Count > 4 && Math.Abs(currentParams[4].value + 1.0) > Double.Epsilon;
-			//if (temp)
-			//{
-			//	for (int i = 0; i < initialParamPosition.Length; i++)
-			//	{
-			//		currentParams[i].value = initialParamPosition[i];
-			//	}
-			//	var test = 0.0;
-			//}
 			stats = $"eqs:{equations_.Count}\nunkn: {currentParams_.Count}";
-			//if (!isInitial)
-			//{
-			//	//for (int i = 0; i < currentParams.Count; i++)
-			//	//{
-			//	//	currentParams[i].value = currentParams_[i].value;
-			//	//}
-
-			//	for (int i = 0; i < parameters.Count; i++)
-			//	{
-			//		parameters[i].value = params_[i].value;
-			//	}
-
-			//	BackSubstitution(ref subs, ref parameters);
-			//	return SolveResult.OKAY;
-			//}
 			BackSubstitution(ref subs_, ref params_);
 			return SolveResult.OKAY;
 		}
@@ -791,25 +678,18 @@ public class EquationSystem  {
 			clearDrag: false);
 
 		// TODO rewrite to solve for l_1
-
-		//Debug.Log($"Matrix A before solve:\n{MatrixToString(A)}");
-		//Debug.Log($"Vector B before solve:\n{string.Join(", ", B)}");
-		//Debug.Log($"Vector X before solve:\n{string.Join(", ", X)}");
+		
 		var copyA = DeepCopyMatrix(A_);
 		dof = GetDoF(copyA);
 		Debug.Log($"Degree of Freedom is: {dof} \n");
-		//if (IsL1Norm)
-		//{
-		LinearSolverExample.SolveLinearProgramInitial(ref A_, ref B_, ref X_, dragIndices, dof, indexToBlock);
-		//}
-		//else
-		//{
-		//	SolveLeastSquares(A, B, ref X);
-		//}
-
-		//Debug.Log($"Matrix A after solve:\n{MatrixToString(A)}");
-		//Debug.Log($"Vector B after solve:\n{string.Join(", ", B)}");
-		//Debug.Log($"Vector X after solve:\n{string.Join(", ", X)}");
+		if (IsProStep && !IsReset)
+		{
+			LinearSolverExample.SolveLinearProgram(A_, B_, ref X_, dragIndices, dof);
+		}
+		else
+		{
+			LinearSolverExample.SolveLinearProgramInitial(ref A_, ref B_, ref X_, dragIndices, dof, indexToBlock);
+		}
 
 		for (int i = 0; i < currentParams_.Count; i++)
 		{
@@ -856,10 +736,10 @@ public class EquationSystem  {
 				    IsUsed = false
 			    });
 		    }
-		    //indicesToConsider.Sort((a, b) => a.AbsoluteSum.CompareTo(b.AbsoluteSum));
-	    }
+			indicesToConsider.Sort((a, b) => a.AbsoluteSum.CompareTo(b.AbsoluteSum));
+		}
 
-		indicesToConsider = indicesToConsider.OrderBy(x => x.AbsoluteSum).ToList();
+		//indicesToConsider = indicesToConsider.OrderBy(x => x.AbsoluteSum).ToList();
 
 	}
 

@@ -79,7 +79,7 @@ namespace Assets.Code.Solver
 
                 if (!IsOldNorm)
                 {
-                    ImprovedL1(numVars, solver, infinity, objective, uVars, vVars);
+                    ImprovedL1(numVars, solver, infinity, objective, uVars, vVars, indexToBlock);
                 }
 
                 objective.SetMinimization();
@@ -199,7 +199,7 @@ namespace Assets.Code.Solver
 
             if (!IsOldNorm)
             {
-                ImprovedL1(numVars, solver, infinity, objective, uVars, vVars);
+                ImprovedL1(numVars, solver, infinity, objective, uVars, vVars, indexToBlock);
             }
 
             objective.SetMinimization();

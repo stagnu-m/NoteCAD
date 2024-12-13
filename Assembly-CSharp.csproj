@@ -183,6 +183,7 @@
     <Compile Include="Assets\Code\External\geometry3Sharp\mesh_selection\MeshBoundaryLoops.cs" />
     <Compile Include="Assets\Code\External\netDxf\netDxf\IO\ICodeValueReader.cs" />
     <Compile Include="Assets\Code\External\geometry3Sharp\distance\DistLine3Segment3.cs" />
+    <Compile Include="Assets\Code\Tools\ChooseBlockPoints.cs" />
     <Compile Include="Assets\Code\External\netDxf\netDxf\Entities\HatchBoundaryPath.cs" />
     <Compile Include="Assets\Code\External\netDxf\netDxf\Entities\HatchGradientPattern.cs" />
     <Compile Include="Assets\Code\External\netDxf\netDxf\Collections\DimensionStyleOverrideDictionary.cs" />
