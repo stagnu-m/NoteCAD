@@ -6,7 +6,7 @@ public class Param {
 	public bool reduceable = true;
 	private double v;
 	public bool changed;
-	public bool IsDrag = false;
+	public bool IsDrag { get; set; }
 	public Guid? Id = Guid.NewGuid();
 
 

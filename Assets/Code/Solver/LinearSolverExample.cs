@@ -15,7 +15,7 @@ namespace Assets.Code.Solver
         private static IndexToBlock indexToBlock { get; set; } = new();
         private static List<IndexToBlock> indicesToConsider { get; set; } = new();
         public static void SolveLinearProgram(double[,] A, double[] B, ref double[] X,
-                                              List<int> dragIndices, int dof)
+                                              List<int> dragIndices, int dof, ref List<Param> currentParams_)
         {
             UnityEngine.Profiling.Profiler.BeginSample("LinearProgram.Solve");
             var copy_A = new double[A.GetLength(0), A.GetLength(1)];
@@ -128,7 +128,7 @@ namespace Assets.Code.Solver
                     Debug.Log("No solution found.");
                 }
 
-                BlockFreeCoordinates(copy_X, dragIndices, dof, numVars);
+                BlockFreeCoordinates(copy_X, dragIndices, dof, numVars, ref currentParams_);
 
 
             }
@@ -254,7 +254,7 @@ namespace Assets.Code.Solver
 
         #region Improving functions
 
-        private static void BlockFreeCoordinates(double[] X, List<int> dragIndices, int dof, int numVars)
+        private static void BlockFreeCoordinates(double[] X, List<int> dragIndices, int dof, int numVars, ref List<Param> currentParams_)
         {
             // Number of points in X (each point has two components)
             int numPairs = numVars / 2;
@@ -279,6 +279,8 @@ namespace Assets.Code.Solver
                 // Skip if both coordinates are zero or both are non-zero
                 if (x_coordinate == 0 ^ y_coordinate == 0)
                 {
+	                // Calculate minimal squared distance
+	                double minSquaredDistance = CalculateMinimalSquaredDistance(ref currentParams_, ref dragIndices, ref varIndex_x, ref varIndex_y);
                     //TODO
                     indicesToConsider.Add(new IndexToBlock
                     {
@@ -286,14 +288,51 @@ namespace Assets.Code.Solver
                         Value_x = x_coordinate,
                         Index_y = varIndex_y,
                         Value_y = y_coordinate,
+                        DistanceToDrag = minSquaredDistance,
                         IsUsed = false
                     });
                 }
                 indicesToConsider.Sort((a, b) => a.AbsoluteSum.CompareTo(b.AbsoluteSum));
             }
 
-            //indicesToConsider = indicesToConsider.OrderBy(x => x.AbsoluteSum).ToList();
+            indicesToConsider = indicesToConsider.OrderBy(x => x.DistanceToDrag).ToList();
 
+        }
+
+        public static double CalculateMinimalSquaredDistance(
+	        ref List<Param> currentParams_,
+	        ref List<int> dragIndices,
+	        ref int varIndex_x,
+	        ref int varIndex_y)
+        {
+	        double minSquaredDistance = double.MaxValue;
+
+	        double x_current_param = currentParams_[varIndex_x].value;
+	        double y_current_param = currentParams_[varIndex_y].value;
+
+	        // Iterate through drag indices in pairs
+	        for (int i = 0; i < dragIndices.Count; i += 2)
+	        {
+		        int dragIndexX = dragIndices[i];
+		        int dragIndexY = dragIndices[i + 1];
+
+		        // Get the values for the drag pair
+		        double x_drag_param = currentParams_[dragIndexX].value;
+		        double y_drag_param = currentParams_[dragIndexY].value;
+
+		        // Calculate squared distance
+		        double squaredDistance =
+			        Math.Pow(x_current_param - x_drag_param, 2) +
+			        Math.Pow(y_current_param - y_drag_param, 2);
+
+		        // Update minimum squared distance
+		        if (squaredDistance < minSquaredDistance)
+		        {
+			        minSquaredDistance = squaredDistance;
+		        }
+	        }
+
+	        return minSquaredDistance;
         }
 
         private static void ImprovedL1(
@@ -387,6 +426,7 @@ namespace Assets.Code.Solver
         public double Value_y { get; set; }
         public bool IsUsed { get; set; }
         public double AbsoluteSum => Math.Abs(Value_x) + Math.Abs(Value_y);
+        public double DistanceToDrag { get; set; }
     }
 
 

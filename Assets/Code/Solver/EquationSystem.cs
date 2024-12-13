@@ -368,15 +368,13 @@ public class EquationSystem  {
 
 		var dof = 0;
 		bool isInitial = true;
-		var initialSolution = new double[X.Length];
-		var initialParamPosition = new double[X.Length];
 		List<IndexToBlock> indicesToConsider = new List<IndexToBlock>();
 
 		var dragIndices = new List<int>();
 
 		for (int i = 0; i < currentParams.Count; i++)
 		{
-			initialParamPosition[i] = currentParams[i].value;
+			//initialParamPosition[i] = currentParams[i].value;
 			if (!currentParams[i].IsDrag) continue;
 			var currentParamIndex = currentParams.FindIndex(x => x == currentParams[i]);
 			dragIndices.Add(currentParamIndex);
@@ -387,7 +385,7 @@ public class EquationSystem  {
 		if (IsNoBlock)
 		{
 			var empty_solution = new double[X.Length];
-			var defaultSolver = DefaultSolver(steps, initialSolution, initialParamPosition, indicesToConsider, dragIndices, null, empty_solution, false, dof);
+			var defaultSolver = DefaultSolver(steps, ref indicesToConsider, ref dragIndices, null, empty_solution, false, dof);
 			if (defaultSolver == SolveResult.OKAY)
 			{
 				return defaultSolver;
@@ -402,6 +400,11 @@ public class EquationSystem  {
 					{
 						//IndexToBlock indexToBlock = null;
 						var indexToBlock = indicesToConsider.FirstOrDefault(x => !x.IsUsed);
+						if (indexToBlock != null)
+						{
+							Debug.Log($"Chosen index is {indexToBlock.Index_x}, {indexToBlock.Index_y}");
+						}
+						
 						//if (!isInitial)
 						//{
 						//var indexToBlock = new IndexToBlock { Index_x = 4, Index_y = 5 };
@@ -416,8 +419,6 @@ public class EquationSystem  {
 							{
 								result = SolveResultL1(
 									ref steps,
-									ref initialSolution,
-									ref initialParamPosition,
 									ref indicesToConsider,
 									ref dragIndices,
 									ref indexToBlock,
@@ -465,8 +466,6 @@ public class EquationSystem  {
 								}
 								result = SolveResultL1(
 									ref steps,
-									ref initialSolution,
-									ref initialParamPosition,
 									ref indicesToConsider,
 									ref dragIndices,
 									ref indexToBlock,
@@ -513,7 +512,7 @@ public class EquationSystem  {
 						ref oldParamValues);
 					StoreParams(ref oldParamValues, parameters);
 
-					var defaultSolver = DefaultSolver(steps, initialSolution, initialParamPosition, indicesToConsider, dragIndices, null, empty_solution, false, dof);
+					var defaultSolver = DefaultSolver(steps, ref indicesToConsider, ref dragIndices, null, empty_solution, false, dof);
 					if (defaultSolver == SolveResult.OKAY)
 					{
 						return defaultSolver;
@@ -526,7 +525,7 @@ public class EquationSystem  {
 		if (IsProStep)
 		{
 			var empty_solution = new double[X.Length];
-			var defaultSolver = DefaultSolver(steps, initialSolution, initialParamPosition, indicesToConsider, dragIndices, null, empty_solution, false, dof);
+			var defaultSolver = DefaultSolver(steps, ref indicesToConsider, ref dragIndices, null, empty_solution, false, dof);
 			if (defaultSolver == SolveResult.OKAY)
 			{
 				return defaultSolver;
@@ -550,7 +549,7 @@ public class EquationSystem  {
 				ref oldParamValues);
 			StoreParams(ref oldParamValues, parameters);
 
-			defaultSolver = DefaultSolver(steps, initialSolution, initialParamPosition, indicesToConsider, dragIndices, null, empty_solution, false, dof);
+			defaultSolver = DefaultSolver(steps, ref indicesToConsider, ref dragIndices, null, empty_solution, false, dof);
 			if (defaultSolver == SolveResult.OKAY)
 			{
 				return defaultSolver;
@@ -568,11 +567,9 @@ public class EquationSystem  {
 	}
 
 	private SolveResult DefaultSolver(
-		int steps, 
-		double[] initialSolution, 
-		double[] initialParamPosition,
-		List<IndexToBlock> indicesToConsider, 
-		List<int> dragIndices, 
+		int steps,
+		ref List<IndexToBlock> indicesToConsider, 
+		ref List<int> dragIndices, 
 		IndexToBlock nullIndex,
 		double[] empty_solution, 
 		bool isInitial, 
@@ -585,8 +582,6 @@ public class EquationSystem  {
 
 			result = SolveResultL1(
 				ref steps,
-				ref initialSolution,
-				ref initialParamPosition,
 				ref indicesToConsider,
 				ref dragIndices,
 				ref nullIndex,
@@ -616,8 +611,6 @@ public class EquationSystem  {
 	}
 
 	private SolveResult SolveResultL1(ref int steps,
-	                                    ref double[] initialSolution,
-	                                    ref double[] initialParamPosition,
 	                                    ref List<IndexToBlock> indicesToConsider,
 	                                    ref List<int> dragIndices,
 	                                    ref IndexToBlock indexToBlock,
@@ -642,11 +635,11 @@ public class EquationSystem  {
 		{
 			if (isInitial && steps > 0)
 			{
-				BlockFreeCoordinates(completeSolution, dragIndices, dof, indicesToConsider);
+				BlockFreeCoordinates(completeSolution, ref dragIndices, dof, ref indicesToConsider, ref currentParams_);
 				isInitial = false;
 
 				RevertParams(ref oldParamValues_, ref params_);
-				//indicesToConsider.Add(new IndexToBlock { Index_x = 4, Index_y = 5 });
+				//indicesToConsider.Add(new IndexToBlock { Index_x = 2, Index_y = 3 });
 				//indicesToConsider.Add(new IndexToBlock { Index_x = 0, Index_y = 1 });
 				//indicesToConsider.Add(new IndexToBlock { Index_x = 4, Index_y = 5 });
 				return SolveResult.BREAK;
@@ -655,8 +648,7 @@ public class EquationSystem  {
 			if (steps > 0)
 			{
 				dofChanged = true;
-				Debug.Log(
-					$"solved {equations_.Count} equations with {currentParams_.Count} unknowns in {steps} steps");
+				//Debug.Log($"solved {equations_.Count} equations with {currentParams_.Count} unknowns in {steps} steps");
 			}
 			stats = $"eqs:{equations_.Count}\nunkn: {currentParams_.Count}";
 			BackSubstitution(ref subs_, ref params_);
@@ -681,10 +673,10 @@ public class EquationSystem  {
 		
 		var copyA = DeepCopyMatrix(A_);
 		dof = GetDoF(copyA);
-		Debug.Log($"Degree of Freedom is: {dof} \n");
+		//Debug.Log($"Degree of Freedom is: {dof} \n");
 		if (IsProStep && !IsReset)
 		{
-			LinearSolverExample.SolveLinearProgram(A_, B_, ref X_, dragIndices, dof);
+			LinearSolverExample.SolveLinearProgram(A_, B_, ref X_, dragIndices, dof, ref currentParams_);
 		}
 		else
 		{
@@ -701,7 +693,8 @@ public class EquationSystem  {
 
 	#region Helper functions
 
-    private static void BlockFreeCoordinates(double[] X, List<int> dragIndices, int dof, List<IndexToBlock> indicesToConsider)
+    private static void BlockFreeCoordinates(double[] X, ref List<int> dragIndices, int dof,
+                                             ref List<IndexToBlock> indicesToConsider, ref List<Param> currentParams_)
     {
 	    // Number of points in X (each point has two components)
 	    int numPairs = X.Length / 2;
@@ -709,7 +702,7 @@ public class EquationSystem  {
 	    // If no DOF, exit early
 	    if (dof == 0) return;
 
-	    if (indicesToConsider.Count >= dof) return;
+	    //if (indicesToConsider.Count >= dof) return;
 
 	    // Iterate over all pairs (points) in X
 	    for (int i = 0; i < numPairs; i++)
@@ -723,9 +716,13 @@ public class EquationSystem  {
 		    double x_coordinate = X[varIndex_x];
 		    double y_coordinate = X[varIndex_y];
 
+
+
 		    // Skip if both coordinates are zero or both are non-zero
 		    if (x_coordinate == 0 ^ y_coordinate == 0)
 		    {
+			    // Calculate minimal squared distance
+			    double minSquaredDistance = CalculateMinimalSquaredDistance(ref currentParams_, ref dragIndices, ref varIndex_x, ref varIndex_y);
 			    //TODO
 			    indicesToConsider.Add(new IndexToBlock
 			    {
@@ -733,15 +730,54 @@ public class EquationSystem  {
 				    Value_x = x_coordinate,
 				    Index_y = varIndex_y,
 				    Value_y = y_coordinate,
+					DistanceToDrag = minSquaredDistance,
 				    IsUsed = false
 			    });
 		    }
-			indicesToConsider.Sort((a, b) => a.AbsoluteSum.CompareTo(b.AbsoluteSum));
+			//indicesToConsider.Sort((a, b) => a.DistanceToDrag.CompareTo(b.DistanceToDrag));
 		}
 
-		//indicesToConsider = indicesToConsider.OrderBy(x => x.AbsoluteSum).ToList();
+		indicesToConsider = indicesToConsider.OrderBy(x => x.DistanceToDrag).ToList();
+		Debug.Log($"Drag points:{string.Join(", ", dragIndices)} \n");
 
 	}
+
+    public static double CalculateMinimalSquaredDistance(
+	    ref List<Param> currentParams_,
+	    ref List<int> dragIndices,
+	    ref int varIndex_x,
+	    ref int varIndex_y)
+    {
+	    double minSquaredDistance = double.MaxValue;
+
+	    double x_current_param = currentParams_[varIndex_x].value;
+	    double y_current_param = currentParams_[varIndex_y].value;
+
+	    // Iterate through drag indices in pairs
+	    for (int i = 0; i < dragIndices.Count; i += 2)
+	    {
+		    int dragIndexX = dragIndices[i];
+		    int dragIndexY = dragIndices[i + 1];
+
+		    // Get the values for the drag pair
+		    double x_drag_param = currentParams_[dragIndexX].value;
+		    double y_drag_param = currentParams_[dragIndexY].value;
+
+		    // Calculate squared distance
+		    double squaredDistance =
+			    Math.Pow(x_current_param - x_drag_param, 2) +
+			    Math.Pow(y_current_param - y_drag_param, 2);
+
+		    // Update minimum squared distance
+		    if (squaredDistance < minSquaredDistance)
+		    {
+			    minSquaredDistance = squaredDistance;
+		    }
+	    }
+
+	    return minSquaredDistance;
+    }
+
 
     // Create a method to print the 2D array
     string MatrixToString(double[,] matrix)
