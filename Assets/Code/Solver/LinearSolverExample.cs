@@ -23,6 +23,7 @@ namespace Assets.Code.Solver
             var copy_X = new double[X.Length];
             var lastOptimalSolution = new double[X.Length];
             indicesToConsider = new List<IndexToBlock>();
+            bool isInitial = true;
             do
             {
                 indexToBlock = indicesToConsider.FirstOrDefault(x => !x.IsUsed);
@@ -122,6 +123,11 @@ namespace Assets.Code.Solver
 
                     lastOptimalSolution = DeepCopyArray(copy_X);
 
+                    if (!isInitial)
+                    {
+                        break;
+                    }
+
                 }
                 else
                 {
@@ -129,13 +135,11 @@ namespace Assets.Code.Solver
                 }
 
                 BlockFreeCoordinates(copy_X, dragIndices, dof, numVars, ref currentParams_);
-
+                isInitial = false;
 
             }
             while (indicesToConsider.Count(x => !x.IsUsed) > 0);
 
-            A = copy_A;
-            B = copy_B;
             X = lastOptimalSolution;
             UnityEngine.Profiling.Profiler.EndSample();
 
@@ -262,7 +266,7 @@ namespace Assets.Code.Solver
             // If no DOF, exit early
             if (dof == 0) return;
 
-            if (indicesToConsider.Count >= dof) return;
+            //if (indicesToConsider.Count >= dof) return;
 
             // Iterate over all pairs (points) in X
             for (int i = 0; i < numPairs; i++)
@@ -270,6 +274,10 @@ namespace Assets.Code.Solver
                 // Skip drag indices
                 int varIndex_x = 2 * i;
                 int varIndex_y = 2 * i + 1;
+                if (indicesToConsider.FirstOrDefault(x => x.Index_x == varIndex_x && x.Index_y == varIndex_y) != null)
+                {
+	                continue;
+                }
                 if (dragIndices.Contains(varIndex_x) || dragIndices.Contains(varIndex_y)) continue;
 
                 // Current point components
@@ -292,7 +300,7 @@ namespace Assets.Code.Solver
                         IsUsed = false
                     });
                 }
-                indicesToConsider.Sort((a, b) => a.AbsoluteSum.CompareTo(b.AbsoluteSum));
+                //indicesToConsider.Sort((a, b) => a.DistanceToDrag.CompareTo(b.DistanceToDrag));
             }
 
             indicesToConsider = indicesToConsider.OrderBy(x => x.DistanceToDrag).ToList();

@@ -142,6 +142,10 @@ public class EquationSystem  {
 		return equations.Any(e => e.IsDrag());
 	}
 
+	public bool HasDraggedForStopwatch() {
+		return sourceEquations.Any(e => e.IsDrag());
+	}
+
 	public void EvalJacobian(
 		ref List<Exp> equations_,
 		ref List<Param> currentParams_,
@@ -710,6 +714,10 @@ public class EquationSystem  {
 		    // Skip drag indices
 		    int varIndex_x = 2 * i;
 		    int varIndex_y = 2 * i + 1;
+		    if (indicesToConsider.FirstOrDefault(x => x.Index_x == varIndex_x && x.Index_y == varIndex_y) != null)
+		    {
+			    continue;
+		    }
 		    if (dragIndices.Contains(varIndex_x) || dragIndices.Contains(varIndex_y)) continue;
 
 		    // Current point components
