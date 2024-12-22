@@ -134,7 +134,7 @@ namespace Assets.Code.Solver
                     Debug.Log("No solution found.");
                 }
 
-                BlockFreeCoordinates(copy_X, dragIndices, dof, numVars, ref currentParams_);
+                FindFreeCoordinates(copy_X, dragIndices, dof, numVars, ref currentParams_);
                 isInitial = false;
 
             }
@@ -258,7 +258,7 @@ namespace Assets.Code.Solver
 
         #region Improving functions
 
-        private static void BlockFreeCoordinates(double[] X, List<int> dragIndices, int dof, int numVars, ref List<Param> currentParams_)
+        private static void FindFreeCoordinates(double[] X, List<int> dragIndices, int dof, int numVars, ref List<Param> currentParams_)
         {
             // Number of points in X (each point has two components)
             int numPairs = numVars / 2;

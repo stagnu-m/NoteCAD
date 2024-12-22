@@ -639,7 +639,7 @@ public class EquationSystem  {
 		{
 			if (isInitial && steps > 0)
 			{
-				BlockFreeCoordinates(completeSolution, ref dragIndices, dof, ref indicesToConsider, ref currentParams_);
+				FindFreeCoordinates(completeSolution, ref dragIndices, dof, ref indicesToConsider, ref currentParams_);
 				isInitial = false;
 
 				RevertParams(ref oldParamValues_, ref params_);
@@ -697,7 +697,7 @@ public class EquationSystem  {
 
 	#region Helper functions
 
-    private static void BlockFreeCoordinates(double[] X, ref List<int> dragIndices, int dof,
+    private static void FindFreeCoordinates(double[] X, ref List<int> dragIndices, int dof,
                                              ref List<IndexToBlock> indicesToConsider, ref List<Param> currentParams_)
     {
 	    // Number of points in X (each point has two components)
