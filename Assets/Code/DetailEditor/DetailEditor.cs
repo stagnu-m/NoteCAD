@@ -551,8 +551,33 @@ public class DetailEditor : MonoBehaviour {
 
 	private void SaveToLog(string logMessage)
 	{
-		// Construct the path to logs.txt
-		string logFilePath = Path.Combine(Application.dataPath, "Code", "TimeEvaluation", "logs.txt");
+		string fileName = "logs.txt";
+
+		if(false)
+		{
+            if (!ChooseNormComponent.IsStandardNorm())
+            {
+                fileName = "MinMax_L_1.txt";
+            }
+            else
+            {
+                if (ChooseBlockPoints.IsNoBlock())
+                {
+                    fileName = "Standard_L_1.txt";
+                }
+                if (ChooseBlockPoints.IsProStep())
+                {
+                    fileName = "Standard_L_1_pro_step.txt";
+                }
+                if (ChooseBlockPoints.IsAfterSolution())
+                {
+                    fileName = "Standard_L_1_after_solution.txt";
+                }
+            }
+        }
+
+        // Construct the path to logs.txt
+        string logFilePath = Path.Combine(Application.dataPath, "Code", "TimeEvaluation", fileName);
 
 		// Normalize slashes for consistency
 		logFilePath = logFilePath.Replace("\\", "/");

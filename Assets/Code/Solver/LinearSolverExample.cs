@@ -11,7 +11,7 @@ namespace Assets.Code.Solver
     public class LinearSolverExample
     {
         private const bool _debug = true;
-        public static bool IsOldNorm => ChooseNormComponent.IsOldNorm();
+        public static bool IsOldNorm => ChooseNormComponent.IsStandardNorm();
         private static IndexToBlock indexToBlock { get; set; } = new();
         private static List<IndexToBlock> indicesToConsider { get; set; } = new();
         public static void SolveLinearProgram(double[,] A, double[] B, ref double[] X,

@@ -833,7 +833,7 @@
     <None Include="Assets\Code\DraftStroke\DraftLinesDepthOff.shader" />
     <None Include="Assets\Code\DraftStroke\DraftLines.shader" />
     <None Include="Assets\Materials\LoopShader.shader" />
-    <None Include="Assets\Code\TimeEvaluation\Plain_L1_No_Block.txt" />
+    <None Include="Assets\Code\TimeEvaluation\MinMax_L_1.txt" />
     <None Include="Assets\OrToolsUtils\System.Memory.xml" />
     <None Include="Assets\OrToolsUtils\System.Numerics.Vectors.xml" />
     <None Include="Assets\OrToolsUtils\System.Runtime.CompilerServices.Unsafe.dll" />
@@ -843,6 +843,7 @@
     <None Include="Assets\OrToolsUtils\Google.Protobuf.dll" />
     <None Include="Assets\OrToolsUtils\System.Memory.dll" />
     <None Include="Assets\OrToolsUtils\System.Runtime.CompilerServices.Unsafe.xml" />
+    <None Include="Assets\Code\TimeEvaluation\Standard_L_1_after_solution.txt" />
     <None Include="Assets\OrToolsUtils\google-ortools-native.dll" />
     <None Include="Assets\Code\TimeEvaluation\logs.txt" />
     <None Include="Assets\TestFiles\sketch_00.xml" />
@@ -850,11 +851,13 @@
     <None Include="Assets\OrToolsUtils\OrTools.dll" />
     <None Include="Assets\OrToolsUtils\System.Buffers.dll" />
     <None Include="Assets\Code\External\UnityRuntimeInspector\Plugins\RuntimeInspector\ExternalResources\ColorWheel\Visuals\ColorWheelShader.shader" />
+    <None Include="Assets\Code\TimeEvaluation\Standard_L_1_pro_step.txt" />
     <None Include="Assets\Code\External\gsSlicer\thirdparty\clipper_library\License.txt" />
     <None Include="Assets\Code\External\netDxf\doc\Changelog.txt" />
     <None Include="Assets\OrToolsUtils\System.Numerics.Vectors.dll" />
     <None Include="Assets\Code\External\FileBrowser\Native\Windows\Ookii.Dialogs.dll" />
     <None Include="Assets\Code\External\UnityRuntimeInspector\Plugins\RuntimeInspector\ExternalResources\ColorWheel\LICENSE.txt" />
+    <None Include="Assets\Code\TimeEvaluation\Standard_L_1.txt" />
     <None Include="Assets\OrToolsUtils\System.Buffers.xml" />
   </ItemGroup>
   <ItemGroup>
