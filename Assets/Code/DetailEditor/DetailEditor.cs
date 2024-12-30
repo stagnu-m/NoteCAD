@@ -210,7 +210,7 @@ public class DetailEditor : MonoBehaviour {
 				if (stopwatch.ElapsedMilliseconds != 0)
 				{
 					var logMessage = $"Time taken: {stopwatch.ElapsedMilliseconds}";
-					SaveToLog(logMessage);
+					//SaveToLog(logMessage);
 					Debug.Log ($"{logMessage}");
 				}
 				stopwatch.Reset();
@@ -553,7 +553,7 @@ public class DetailEditor : MonoBehaviour {
 	{
 		string fileName = "logs.txt";
 
-		if(false)
+		if(true)
 		{
             if (!ChooseNormComponent.IsStandardNorm())
             {

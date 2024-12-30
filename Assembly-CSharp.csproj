@@ -845,7 +845,6 @@
     <None Include="Assets\OrToolsUtils\System.Runtime.CompilerServices.Unsafe.xml" />
     <None Include="Assets\Code\TimeEvaluation\Standard_L_1_after_solution.txt" />
     <None Include="Assets\OrToolsUtils\google-ortools-native.dll" />
-    <None Include="Assets\Code\TimeEvaluation\logs.txt" />
     <None Include="Assets\TestFiles\sketch_00.xml" />
     <None Include="Assets\Code\External\FileBrowser\Native\Windows\System.Windows.Forms.dll" />
     <None Include="Assets\OrToolsUtils\OrTools.dll" />
