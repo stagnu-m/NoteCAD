@@ -68,7 +68,7 @@ public class LineEntity : Entity, ISegmentaryEntity {
 	}
 
 	public override Exp Length() {
-		return (p1.exp - p0.exp).Magnitude();
+		return (p1.exp - p0.exp).MagnitudeSquare();
 	}
 
 	public override Exp Radius() {

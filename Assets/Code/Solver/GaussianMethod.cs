@@ -59,6 +59,7 @@ public static class GaussianMethod {
 		return rank;
 	}
 
+	// TODO rewrite to solve for l_1
 	public static void Solve(double[,] A, double[] B, ref double[] X) {
 
 		UnityEngine.Profiling.Profiler.BeginSample("GaussianMethod.Solve");

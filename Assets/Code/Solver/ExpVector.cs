@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ExpVector {
@@ -63,6 +64,10 @@ public class ExpVector {
 
 	public Exp Magnitude() {
 		return Exp.Sqrt(Exp.Sqr(x) + Exp.Sqr(y) + Exp.Sqr(z));
+	}
+
+	public Exp MagnitudeSquare() {
+		return Exp.Sqr(x) + Exp.Sqr(y) + Exp.Sqr(z);
 	}
 
 	public ExpVector Normalized() {

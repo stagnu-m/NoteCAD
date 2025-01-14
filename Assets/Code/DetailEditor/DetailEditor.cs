@@ -8,6 +8,7 @@ using Csg;
 using RuntimeInspectorNamespace;
 using System.IO;
 using System.Xml;
+using Assets.Code.Tools;
 
 public class DetailEditor : MonoBehaviour {
 
@@ -166,11 +167,14 @@ public class DetailEditor : MonoBehaviour {
 		ActivateFeature(activeFeature);
 	}
 
-	public void AddDrag(Exp drag) {
+	public void AddDrag(Exp drag)
+	{
+		drag.a.param.IsDrag = true;
 		sys.AddEquation(drag);
 	}
 
 	public void RemoveDrag(Exp drag) {
+		drag.a.param.IsDrag = false;
 		sys.RemoveEquation(drag);
 	}
 
@@ -191,7 +195,27 @@ public class DetailEditor : MonoBehaviour {
 			if(currentSketch != null && currentSketch.IsTopologyChanged()) {
 				UpdateSystem();
 			}
+			// time evaluation for different methods
+			System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+			if (sys.HasDraggedForStopwatch())
+			{
+				stopwatch.Start();
+			}
+
 			var res = (!suppressSolve || sys.HasDragged()) ? sys.Solve() : EquationSystem.SolveResult.DIDNT_CONVEGE;
+
+			if (sys.HasDraggedForStopwatch())
+			{
+				stopwatch.Stop();
+				if (stopwatch.ElapsedMilliseconds != 0)
+				{
+					var logMessage = $"Time taken: {stopwatch.ElapsedMilliseconds}";
+					//SaveToLog(logMessage);
+					Debug.Log ($"{logMessage}");
+				}
+				stopwatch.Reset();
+			}
+
 			if(res == EquationSystem.SolveResult.DIDNT_CONVEGE) {
 				suppressSolve = true;
 			}
@@ -523,6 +547,59 @@ public class DetailEditor : MonoBehaviour {
 			return (activeFeature as MeshFeature).solid.ToStlString(activeFeature.GetType().Name);
 		}
 		return "";
+	}
+
+	private void SaveToLog(string logMessage)
+	{
+		string fileName = "logs.txt";
+
+		if(true)
+		{
+            if (!ChooseNormComponent.IsStandardNorm())
+            {
+                fileName = "MinMax_L_1.txt";
+            }
+            else
+            {
+                if (ChooseBlockPoints.IsNoBlock())
+                {
+                    fileName = "Standard_L_1.txt";
+                }
+                if (ChooseBlockPoints.IsProStep())
+                {
+                    fileName = "Standard_L_1_pro_step.txt";
+                }
+                if (ChooseBlockPoints.IsAfterSolution())
+                {
+                    fileName = "Standard_L_1_after_solution.txt";
+                }
+            }
+        }
+
+        // Construct the path to logs.txt
+        string logFilePath = Path.Combine(Application.dataPath, "Code", "TimeEvaluation", fileName);
+
+		// Normalize slashes for consistency
+		logFilePath = logFilePath.Replace("\\", "/");
+
+		try
+		{
+			// Ensure the directory exists
+			string directoryPath = Path.GetDirectoryName(logFilePath);
+			if (!Directory.Exists(directoryPath))
+			{
+				Directory.CreateDirectory(directoryPath);
+			}
+
+			// Append the message to the log file
+			File.AppendAllText(logFilePath, logMessage + "\n");
+
+			Debug.Log($"Log message saved to: {logFilePath}");
+		}
+		catch (Exception ex)
+		{
+			Debug.LogError($"Failed to save log message: {ex.Message}");
+		}
 	}
 
 	private void OnDrawGizmos() {

@@ -1,0 +1,14 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/Environment/AssemblyExplorer/XmlDocument/@EntryValue">&lt;AssemblyExplorer&gt;&#xD;
+  &lt;Assembly Path="C:\Users\Klokta\Desktop\Studium\BachelorArbeit\Project\NoteCAD\Assets\OrToolsUtils\Google.OrTools.dll" /&gt;&#xD;
+  &lt;Assembly Path="C:\Users\Klokta\Desktop\Studium\BachelorArbeit\Project\NoteCAD\Assets\OrToolsUtils\OrTools.dll" /&gt;&#xD;
+  &lt;Assembly Path="C:\Program Files\Unity\Hub\Editor\2022.3.32f1\Editor\Data\Managed\UnityEngine\UnityEditor.dll" /&gt;&#xD;
+  &lt;Assembly Path="C:\Users\Klokta\Desktop\Studium\BachelorArbeit\Project\NoteCAD\Library\ScriptAssemblies\UnityEngine.UI.dll" /&gt;&#xD;
+  &lt;Assembly Path="C:\Users\Klokta\Desktop\Studium\BachelorArbeit\Project\NoteCAD\Assets\ElasticNetUtils\MathNet.Numerics.dll" /&gt;&#xD;
+&lt;/AssemblyExplorer&gt;</s:String>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=Antidirected/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=Blocksize/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=Codirected/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=determind/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=enumerables/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=Procs/@EntryIndexedValue">True</s:Boolean></wpf:ResourceDictionary>
